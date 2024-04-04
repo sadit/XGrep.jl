@@ -1,5 +1,5 @@
 module XGrep
-using JSON, SimilaritySearch, TextSearch, CodecZlib, ArgParse
+using SimilaritySearch, TextSearch, CodecZlib, ArgParse
 # Write your package code here.
 
 function my_eachline(filterfun::Function, filename)
