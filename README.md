@@ -1,2 +1,3 @@
-# XGrep.jl
-Simple grep variant using cosine similarity and different text preprocessing tricks to filter
+# XGrep
+
+[![Build Status](https://github.com/sadit/XGrep.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/sadit/XGrep.jl/actions/workflows/CI.yml?query=branch%3Amain)
