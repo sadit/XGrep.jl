@@ -95,51 +95,8 @@ filter lines matching some query using the cosine distance; the text is preproce
     nlist = Int[parse(Int, q) for q in split(nwords, ',')]; sort!(nlist, rev=true); while length(nlist) > 0 && nlist[end] == 0; pop!(nlist); end
 
     textconfig = TextConfig(; nlist, qlist, lc=ignore_prefix)
-    @show query files
     xgrep(; files, mincos, query, print_prefix=!ignore_prefix, textconfig)
 end
 
-#=
-function xmain(ARGS)
-    spec = ArgParseSettings()
-
-    @add_arg_table! spec begin
-        "--query", "-q"
-            help = "query pattern"
-            required = true
-        "--mincos", "-m"
-            help = "minimum cosine similarity to accept a line"
-            arg_type = Float64
-            default = 0.0
-        "--ignore-prefix"
-            help = "ignore match information prefix"
-            action = :store_true
-        "--ignore-case", "-i"
-            help = "ignore casing character information"
-            action = :store_true
-        "--nwords"
-            help = "comma separated list of word-grams for filtering, e.g., '-n 1,2'; zero means for ignoring nwords"
-            arg_type = String
-            default = "0"
-        "--qgrams"
-            help = "comma separated list of character qgrams, i.e., '-q 3,5'; zero means for ignoring qgrams"
-            arg_type = String
-            default = "3"
-        "files"
-            help = "input files"
-            required = true
-            nargs = '*'
-    end
-
-    args = parse_args(ARGS, spec)
-
-    qlist = Int[parse(Int, q) for q in split(args["qgrams"], ',')]; sort!(qlist, rev=true); while length(qlist) > 0 && qlist[end] == 0; pop!(qlist); end
-    nlist = Int[parse(Int, q) for q in split(args["nwords"], ',')]; sort!(nlist, rev=true); while length(nlist) > 0 && nlist[end] == 0; pop!(nlist); end
-
-    textconfig = TextConfig(; nlist, qlist, lc=args["ignore-prefix"])
-    xgrep(; files=args["files"], mincos=args["mincos"], query=args["query"], print_prefix=!args["ignore-prefix"], textconfig)
-    nothing
-end
-=#
 end
 
