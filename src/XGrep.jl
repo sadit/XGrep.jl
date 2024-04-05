@@ -3,14 +3,14 @@ using TextSearch, CodecZstd, CodecBzip2, CodecZlib, Comonicon
 # Write your package code here.
 
 function my_eachline(filterfun::Function, filename)
-    if endswith(filename, ".gz")
-        codec = GzipDecompressorStream
+    codec = if endswith(filename, ".gz")
+        GzipDecompressorStream
     elseif endswith(filename, ".bz2")
-        codec = Bzip2DecompressorStream
+        Bzip2DecompressorStream
     elseif endswith(filename, ".zst")
-        codec = ZstdDecompressorStream
+        ZstdDecompressorStream
     else
-        codec = nothing
+        nothing
     end
 
     if codec === nothing
@@ -21,8 +21,9 @@ function my_eachline(filterfun::Function, filename)
         end
     else
         open(codec, filename) do stream
-        for (lineno, line) in enumerate(eachline(stream))
-            filterfun(lineno, line, filename)
+            for (lineno, line) in enumerate(eachline(stream))
+                filterfun(lineno, line, filename)
+            end
         end
     end
 end
@@ -65,7 +66,7 @@ function get_text(line, line_format, field)
     end
 end
 
-function xgrep(line_format, field; files, query::String, print_prefix::Bool=true, textconfig=TextConfig(qlist=[3]), mincos::Float64=0.0)
+function xgrep(report, line_format, field; files, query::String, textconfig=TextConfig(qlist=[3]), mincos::Float64=0.0)
     Q = Set(tokenize(identity, textconfig, query))
     D = Set{String}()
     for filename in files
@@ -76,10 +77,7 @@ function xgrep(line_format, field; files, query::String, print_prefix::Bool=true
                 push!(D, u)
             end
             s = cosinesim(Q, D)
-            if s > mincos
-                print_prefix && print(filename, ":", lineno, ":", round(s; digits=4), ":")
-                println(line)
-            end
+            s > mincos && report(filename, lineno, s, line)
         end
     end
 end
@@ -111,8 +109,8 @@ filter lines matching some query using the cosine distance; the text is preproce
         ignore_case::Bool=false,
         nwords::String="0",
         qgrams::String="3,5",
-        line_format=:raw,
-        field=1
+        line_format::String="raw",
+        field=nothing
     )
 
     qlist = Int[parse(Int, q) for q in split(qgrams, ',')]; sort!(qlist, rev=true); while length(qlist) > 0 && qlist[end] == 0; pop!(qlist); end
@@ -124,10 +122,13 @@ filter lines matching some query using the cosine distance; the text is preproce
     elseif line_format == "json"
         :json, field
     else
-        line_format, parse(Int, field)
+        first(line_format), parse(Int, field)
     end
 
-    xgrep(line_format, field; files, mincos, query, print_prefix=!ignore_prefix, textconfig)
+    xgrep(line_format, field; files, mincos, query, textconfig) do filename, lineno, sim, line
+        !ignore_prefix && print(filename, ":", lineno, ":", round(sim; digits=4), ":")
+        println(line)
+    end
 end
 
 end
