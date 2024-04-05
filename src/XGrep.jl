@@ -1,5 +1,5 @@
 module XGrep
-using TextSearch, CodecZlib, ArgParse
+using TextSearch, CodecZlib, Comonicon
 # Write your package code here.
 
 function my_eachline(filterfun::Function, filename)
@@ -46,7 +46,7 @@ end
  
 cosinesim(Q, D) = intsize(Q, D) / (sqrt(length(Q)) * sqrt(length(D)))
 
-function xgrep(; files::AbstractVector, query::String, print_prefix::Bool=true, textconfig=TextConfig(qlist=[3]), mincos::Float64=0.0)
+function xgrep(; files, query::String, print_prefix::Bool=true, textconfig=TextConfig(qlist=[3]), mincos::Float64=0.0)
     Q = Set(tokenize(identity, textconfig, query))
     D = Set{String}()
     for filename in files
@@ -64,7 +64,43 @@ function xgrep(; files::AbstractVector, query::String, print_prefix::Bool=true, 
     end
 end
 
-function main(ARGS)
+"""
+filter lines matching some query using the cosine distance; the text is preprocessed and vectorized
+
+# Args
+
+- `query`: query specification
+- `files`: files to filter
+
+# Options
+
+- `-m, --mincos=<float>`: minimum cosine distance between query and line to accept a line
+- `-n, --nwords=<list>`: list of word tokenizers to use
+- `-q, --qgrams=<list>`: list of character qgrams to use
+
+# Flags
+- `-i, --ignore-case`: case insenstive
+- `--ignore-prefix`: ignores prefix in the output
+
+"""
+@main function main(query::String, files...;
+        mincos::Float64=0.0,
+        ignore_prefix::Bool=false,
+        ignore_case::Bool=false,
+        nwords::String="0",
+        qgrams::String="3,5"
+    )
+
+    qlist = Int[parse(Int, q) for q in split(qgrams, ',')]; sort!(qlist, rev=true); while length(qlist) > 0 && qlist[end] == 0; pop!(qlist); end
+    nlist = Int[parse(Int, q) for q in split(nwords, ',')]; sort!(nlist, rev=true); while length(nlist) > 0 && nlist[end] == 0; pop!(nlist); end
+
+    textconfig = TextConfig(; nlist, qlist, lc=ignore_prefix)
+    @show query files
+    xgrep(; files, mincos, query, print_prefix=!ignore_prefix, textconfig)
+end
+
+#=
+function xmain(ARGS)
     spec = ArgParseSettings()
 
     @add_arg_table! spec begin
@@ -104,6 +140,6 @@ function main(ARGS)
     xgrep(; files=args["files"], mincos=args["mincos"], query=args["query"], print_prefix=!args["ignore-prefix"], textconfig)
     nothing
 end
-
+=#
 end
 
